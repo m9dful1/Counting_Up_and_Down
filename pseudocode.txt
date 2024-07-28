@@ -1,0 +1,54 @@
+// Include necessary libraries
+Include <iostream>
+Include <thread>
+Include <mutex>
+Include <condition_variable>
+
+// Declare a mutex for protecting shared data
+Declare mutex mtx
+
+// Declare a condition variable to synchronize threads
+Declare condition_variable cv
+
+// Declare a boolean flag to indicate when the first thread has finished counting up
+Declare boolean ready = false
+
+// Function to count up from 0 to 20
+Function countUp:
+    For i from 0 to 20:
+        // Simulate work by sleeping for 100 milliseconds
+        Sleep for 100 milliseconds
+        // Lock the mutex to safely print
+        Lock mtx
+        Print "Count Up: " + i
+        Unlock mtx
+    End For
+    // Lock the mutex to modify the shared variable 'ready'
+    Lock mtx
+    Set ready = true // Indicate that counting up is done
+    Unlock mtx
+    // Notify the other thread that it can start counting down
+    Notify cv
+
+// Function to count down from 20 to 0
+Function countDown:
+    // Lock the mutex to wait for the condition variable
+    Lock mtx
+    // Wait until the 'ready' flag is true
+    Wait on cv with lock mtx until ready is true
+    For i from 20 to 0:
+        // Simulate work by sleeping for 100 milliseconds
+        Sleep for 100 milliseconds
+        Print "Count Down: " + i
+    End For
+
+// Main function
+Function main:
+    // Create the first thread to count up
+    Create thread thread1 to run countUp
+    // Create the second thread to count down
+    Create thread thread2 to run countDown
+    // Wait for both threads to finish
+    Join thread1
+    Join thread2
+    Return 0
